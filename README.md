@@ -106,7 +106,7 @@ This module will create resources that are used to export a Dynamo Table to an S
 
 ## Job Script 
 
-You need to create a script job in Python that will be used for the Glue Job that this module going to create.
+If you are using the version v0.0.1 of this module, You need to create a script job in Python that will be used for the Glue Job that this module going to create.
 
 ```PY
 import sys
@@ -143,8 +143,9 @@ job.commit()
 ## Use of Module Example
 
 ```js
-module "dynamo_export" {
-  source                    = "../dynamo-export-to-s3"  
+module "dynamoExport" {
+  source  = "JeissonO/dynamoExport/aws"
+  version = "0.0.1"
   resource                  = "table"
   dynamo_table_arn          = "arn:aws:dynamodb:us-east-2:111122223333:table/table"
   dynamo_table_name         = "dynamo-table"

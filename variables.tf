@@ -116,9 +116,9 @@ variable "max_retries" {
   default     = 0
 }
 variable "job_timeout" {
-  description = "aws_glue_job: The job timeout in minutes. The default is 2880 minutes (48 hours)."
+  description = "aws_glue_job: The job timeout in minutes."
   type        = number
-  default     = 2880
+  default     = 10
 }
 variable "max_concurrent_runs" {
   description = "aws_glue_job:  The maximum number of concurrent runs allowed for a job. The default is 1."
@@ -131,6 +131,14 @@ variable "s3_spark_logs_path" {
 }
 variable "s3_glue_job_script_path" {
   description = "aws_glue_job: Path where are stored the python script that going to uses glue's job"
+  type        = string
+}
+variable "s3_glue_job_script_bucket" {
+  description = "aws_s3_bucket_object: Bucket S3 where will stored the job"
+  type        = string
+}
+variable "s3_backups_bucket_path" {
+  description = "aws_s3_bucket_object: Path where will be stored the backups files (s3://bucket-name/path/)"
   type        = string
 }
 variable "python_version" {
@@ -226,4 +234,45 @@ locals {
     Project      = var.project
   }))
   lambda_env_variables = { GLUE_JOB_NAME = "${var.project}-${var.resource}-job" }
+  script_job           = <<EOF
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from datetime import datetime
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+## @type: DataSource0
+## @args: [database = "${var.project}-${var.resource}-db", table_name = "${var.dynamo_table_name}", transformation_ctx = "DataSource0"]
+## @return: DataSource0
+## @inputs: []
+DataSource0 = glueContext.create_dynamic_frame.from_catalog(database = "${var.project}-${var.resource}-db", table_name = "${var.dynamo_table_name}", transformation_ctx = "DataSource0")
+## @type: ApplyMapping
+## @args: [mappings = [("trace", "string", "trace", "string"), ("service", "string", "service", "string"), ("service_name", "string", "service_name", "string"), ("ip", "string", "ip", "string"), ("timestamp", "string", "timestamp", "string")], transformation_ctx = "Transform0"]
+## @return: Transform0
+## @inputs: [frame = DataSource0]
+#Transform0 = ApplyMapping.apply(frame = DataSource0, mappings = [("trace", "string", "trace", "string"), ("service", "string", "service", "string"), ("service_name", "string", "service_name", "string"), ("ip", "string", "ip", "string"), ("timestamp", "string", "timestamp", "string")], transformation_ctx = "Transform0")
+
+repartition = DataSource0.repartition(1)
+## @type: DataSink
+## @args: [connection_type = "s3", format = "csv", connection_options = {"path": "${s3_backups_bucket_path}", "partitionKeys": []}, transformation_ctx = "DataSink0"]
+## @return: DataSink0
+## @inputs: [frame = Transform0]
+DataSink0 = glueContext.write_dynamic_frame.from_options(frame = repartition, connection_type = "s3", format = "csv", connection_options = {"path": "${s3_backups_bucket_path}"+ str(datetime.now()), "partitionKeys": []}, transformation_ctx = "DataSink0",
+format_options={
+    "quoteChar": -1,
+    "separator": ";",
+    "multiline": True,
+    "escaper":"\n"
+    })
+job.commit()
+  EOF
 }

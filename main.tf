@@ -49,6 +49,9 @@ resource "aws_glue_crawler" "crawler" {
     delete_behavior = var.delete_behavior
     update_behavior = var.update_behavior
   }
+  provisioner "local-exec" {
+    command = "aws glue start-crawler --name ${self.name}"
+  }
   tags = merge({ Name = "${var.project}-${var.resource}-crawler" }, local.common_tags, )
 }
 
@@ -75,6 +78,12 @@ resource "aws_cloudwatch_log_group" "glue_job_log_group" {
   retention_in_days = var.retention_in_days
 }
 
+resource "aws_s3_bucket_object" "s3_job_file" {
+  bucket  = var.s3_glue_job_script_bucket
+  key     = "scripts/${var.resource}-glue-job.py"
+  content = local.script_job
+}
+
 resource "aws_glue_job" "glue_job" {
   default_arguments = {
     "--class"                            = "GlueApp"
@@ -99,7 +108,8 @@ resource "aws_glue_job" "glue_job" {
   command {
     name            = "glueetl"
     python_version  = var.python_version
-    script_location = var.s3_glue_job_script_path
+    script_location = "s3://${var.s3_glue_job_script_bucket}/${aws_s3_bucket_object.s3_job_file.id}"
+    //script_location = var.s3_glue_job_script_path    
   }
   execution_property {
     max_concurrent_runs = var.max_concurrent_runs
@@ -146,6 +156,10 @@ resource "aws_cloudwatch_event_rule" "dynamo_backups_event_rule" {
   tags                = merge({ Name = "${var.environment}-${var.project}-${var.resource}-event" }, local.common_tags, )
 }
 resource "aws_cloudwatch_event_target" "dynamo_backups_event_target" {
-  arn  = aws_lambda_function.logs_backup.arn
-  rule = aws_cloudwatch_event_rule.dynamo_backups_event_rule.id
+  arn       = aws_lambda_function.logs_backup.arn
+  target_id = aws_cloudwatch_event_rule.dynamo_backups_event_rule.name
+  rule      = aws_cloudwatch_event_rule.dynamo_backups_event_rule.id
+  depends_on = [
+    aws_cloudwatch_event_rule.dynamo_backups_event_rule,
+  ]
 }
