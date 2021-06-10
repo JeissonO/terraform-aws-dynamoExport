@@ -98,9 +98,10 @@ resource "aws_glue_job" "glue_job" {
     "--spark-event-logs-path"            = var.s3_spark_logs_path
 
   }
-  glue_version = "2.0"
-  max_capacity = var.max_capacity
   max_retries  = var.max_retries
+  glue_version = "2.0"  
+  worker_type  = var.worker_type
+  number_of_workers = var.number_of_workers
   name         = "${var.project}-${var.resource}-job"
   role_arn     = aws_iam_role.crawler_role.arn
   timeout      = var.job_timeout

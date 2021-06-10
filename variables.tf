@@ -105,11 +105,6 @@ variable "retention_in_days" {
   type        = number
   default     = 5
 }
-variable "max_capacity" {
-  description = "aws_glue_job: The maximum number of AWS Glue data processing units (DPUs) that can be allocated when this job runs"
-  type        = number
-  default     = 10
-}
 variable "max_retries" {
   description = "aws_glue_job: The maximum number of times to retry this job if it fails"
   type        = number
@@ -119,6 +114,16 @@ variable "job_timeout" {
   description = "aws_glue_job: The job timeout in minutes."
   type        = number
   default     = 10
+}
+variable "worker_type" {
+  description = "aws_glue_job:  The type of predefined worker that is allocated when a job runs. Accepts a value of Standard, G.1X, or G.2X."
+  type        = string
+  default     = "Standard"
+}
+variable "number_of_workers" {
+  description = "aws_glue_job: The number of workers of a defined workerType that are allocated when a job runs."
+  type        = number
+  default     = 2
 }
 variable "max_concurrent_runs" {
   description = "aws_glue_job:  The maximum number of concurrent runs allowed for a job. The default is 1."
