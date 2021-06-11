@@ -3,16 +3,9 @@
 
 This module will create resources that are used to export a Dynamo Table to an S3 Bucket using AWS Glue 
 
-## Changes Control
-
-| Version | Date | Responsible | Comments | 
-|--|--|--|--|
-| v.1.0.0 | jun 08, 2021 8:00 pm | [Jeisson Osorio]() | Versión inicial |
-
 ## Content
 
 - [terraform-aws-dynamoExport](#terraform-aws-dynamoexport)
-  - [Changes Control](#changes-control)
   - [Content](#content)
   - [Requirements](#requirements)
   - [Providers](#providers)
@@ -20,7 +13,7 @@ This module will create resources that are used to export a Dynamo Table to an S
   - [Inputs](#inputs)
   - [Outputs](#outputs)
   - [Job Script](#job-script)
-  - [Use of Module Example](#use-of-module-example)
+  - [Use of Module Example v0.0.1 of this module](#use-of-module-example-v001-of-this-module)
 
 
 
@@ -30,13 +23,14 @@ This module will create resources that are used to export a Dynamo Table to an S
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 1.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.7.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 1.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.7.0 |
+
 
 ## Resources
 
@@ -53,6 +47,7 @@ This module will create resources that are used to export a Dynamo Table to an S
 | [aws_iam_role.crawler_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.lambda_to_glue](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_lambda_function.logs_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
+| [aws_s3_bucket_object.s3_job_file](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_object) | resource |
 
 ## Inputs
 
@@ -69,12 +64,12 @@ This module will create resources that are used to export a Dynamo Table to an S
 | <a name="input_environment"></a> [environment](#input\_environment) | Ambiente en el cual se esta ejecutando el proyecto y se desea crear el recurso | `string` | `"sandbox"` | no |
 | <a name="input_force_detach_policies"></a> [force\_detach\_policies](#input\_force\_detach\_policies) | aws\_iam\_role: Whether to force detaching any policies the role has before destroying it | `bool` | `false` | no |
 | <a name="input_handler"></a> [handler](#input\_handler) | aws\_lambda\_function: lambda handler to the function | `string` | `"lambda-function.lambda_handler"` | no |
-| <a name="input_job_timeout"></a> [job\_timeout](#input\_job\_timeout) | aws\_glue\_job: The job timeout in minutes. The default is 2880 minutes (48 hours). | `number` | `2880` | no |
+| <a name="input_job_timeout"></a> [job\_timeout](#input\_job\_timeout) | aws\_glue\_job: The job timeout in minutes. | `number` | `10` | no |
 | <a name="input_lambda_timeout"></a> [lambda\_timeout](#input\_lambda\_timeout) | aws\_lambda\_function: time in seconds for timeout | `number` | `3` | no |
-| <a name="input_max_capacity"></a> [max\_capacity](#input\_max\_capacity) | aws\_glue\_job: The maximum number of AWS Glue data processing units (DPUs) that can be allocated when this job runs | `number` | `10` | no |
 | <a name="input_max_concurrent_runs"></a> [max\_concurrent\_runs](#input\_max\_concurrent\_runs) | aws\_glue\_job:  The maximum number of concurrent runs allowed for a job. The default is 1. | `number` | `1` | no |
 | <a name="input_max_retries"></a> [max\_retries](#input\_max\_retries) | aws\_glue\_job: The maximum number of times to retry this job if it fails | `number` | `0` | no |
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | aws\_lambda\_function: Memoria asignada a la funcion lambda | `number` | `128` | no |
+| <a name="input_number_of_workers"></a> [number\_of\_workers](#input\_number\_of\_workers) | aws\_glue\_job: The number of workers of a defined workerType that are allocated when a job runs. | `number` | `2` | no |
 | <a name="input_organization"></a> [organization](#input\_organization) | Entidad / Organizacion dueña del proyecto | `string` | `"poc"` | no |
 | <a name="input_parameters_classification"></a> [parameters\_classification](#input\_parameters\_classification) | aws\_glue\_catalog\_table:parameters:classification: Classification of table (dynamodb) | `string` | `"dynamodb"` | no |
 | <a name="input_parameters_type_of_data"></a> [parameters\_type\_of\_data](#input\_parameters\_type\_of\_data) | aws\_glue\_catalog\_table:parameters:typeOfData: Type of data (table) | `string` | `"table"` | no |
@@ -85,11 +80,14 @@ This module will create resources that are used to export a Dynamo Table to an S
 | <a name="input_resource"></a> [resource](#input\_resource) | Recurso asociado a la creacion del modulo | `string` | `"object"` | no |
 | <a name="input_retention_in_days"></a> [retention\_in\_days](#input\_retention\_in\_days) | aws\_cloudwatch\_log\_group: Retention number days of logs in cloud watch log group | `number` | `5` | no |
 | <a name="input_runtime"></a> [runtime](#input\_runtime) | aws\_lambda\_function: execution runtime for the lambda function | `string` | `"python3.8"` | no |
+| <a name="input_s3_backups_bucket_path"></a> [s3\_backups\_bucket\_path](#input\_s3\_backups\_bucket\_path) | aws\_s3\_bucket\_object: Path where will be stored the backups files (s3://bucket-name/path/) | `string` | n/a | yes |
+| <a name="input_s3_glue_job_script_bucket"></a> [s3\_glue\_job\_script\_bucket](#input\_s3\_glue\_job\_script\_bucket) | aws\_s3\_bucket\_object: Bucket S3 where will stored the job | `string` | n/a | yes |
 | <a name="input_s3_glue_job_script_path"></a> [s3\_glue\_job\_script\_path](#input\_s3\_glue\_job\_script\_path) | aws\_glue\_job: Path where are stored the python script that going to uses glue's job | `string` | n/a | yes |
 | <a name="input_s3_spark_logs_path"></a> [s3\_spark\_logs\_path](#input\_s3\_spark\_logs\_path) | aws\_glue\_job: Path where spark will store events logs | `string` | n/a | yes |
 | <a name="input_table_retention"></a> [table\_retention](#input\_table\_retention) | aws\_glue\_catalog\_table: Retention time for this table | `number` | `0` | no |
 | <a name="input_table_type"></a> [table\_type](#input\_table\_type) | aws\_glue\_catalog\_table: Type of this table (EXTERNAL\_TABLE, VIRTUAL\_VIEW) | `string` | `"EXTERNAL_TABLE"` | no |
 | <a name="input_update_behavior"></a> [update\_behavior](#input\_update\_behavior) | aws\_glue\_crawler: The update behavior when the crawler finds a changed schema. Valid values: LOG or UPDATE\_IN\_DATABASE | `string` | `"UPDATE_IN_DATABASE"` | no |
+| <a name="input_worker_type"></a> [worker\_type](#input\_worker\_type) | aws\_glue\_job:  The type of predefined worker that is allocated when a job runs. Accepts a value of Standard, G.1X, or G.2X. | `string` | `"Standard"` | no |
 
 ## Outputs
 
@@ -140,7 +138,7 @@ job.commit()
 
 > This jobs must be stored in a S3 Bucket in your account and you need to pass the file path as variable in **S3_glue_job_script_path** 
 
-## Use of Module Example
+## Use of Module Example v0.0.1 of this module
 
 ```js
 module "dynamoExport" {
