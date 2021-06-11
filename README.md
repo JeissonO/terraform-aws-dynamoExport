@@ -1,5 +1,5 @@
 
-# Dynamo Table Export to S3
+# terraform-aws-dynamoExport
 
 This module will create resources that are used to export a Dynamo Table to an S3 Bucket using AWS Glue 
 
@@ -11,7 +11,7 @@ This module will create resources that are used to export a Dynamo Table to an S
 
 ## Content
 
-- [Dynamo Table Export to S3](#dynamo-table-export-to-s3)
+- [terraform-aws-dynamoExport](#terraform-aws-dynamoexport)
   - [Changes Control](#changes-control)
   - [Content](#content)
   - [Requirements](#requirements)
